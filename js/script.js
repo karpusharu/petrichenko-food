@@ -95,26 +95,22 @@ window.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', closePopupEsc);
     document.addEventListener('click', closePopupClick);
     modal.classList.add('show');
-    // modal.classList.remove('hide');
     document.body.style.overflow = 'hidden';
     clearTimeout(modalTimerId);
   }
 
   function closePopupClick (evt) {
-    if(evt.target === modal){
+    if(evt.target === modal || evt.target.getAttribute('data-close') === ''){
       closePopup();
     }
   }
 
   function closePopup () {
     modal.classList.remove('show');
-    // modal.classList.add('hide');
     document.removeEventListener('keydown', closePopupEsc);
     document.removeEventListener('click', closePopupClick);
     document.body.style.overflow = 'scroll';
   }
-  const btnClosePopup = modal.querySelector('.modal__close');
-  btnClosePopup.addEventListener('click', closePopup);
 
   function closePopupEsc (evt) {
     if(evt.key === 'Escape'){
@@ -135,29 +131,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
   //class implementation
-  const data = {
-    1: {
-      src: 'img/tabs/vegy.jpg',
-      alt:"vegy",
-      title: 'Меню "Фитнес"',
-      description: 'Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!',
-      price: 229
-    },
-    2: {
-      src: "img/tabs/elite.jpg",
-      alt:"elite",
-      title: 'Меню “Премиум”',
-      description: 'В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!',
-      price: 550
-    },
-    3: {
-      src: "img/tabs/post.jpg",
-      alt:'post',
-      title: 'Меню "Постное"',
-      description: 'Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.',
-      price: 430
-    }
-  }
   class MenuCard {
     constructor ({src, alt, title, description, price}, parentSelector, ...classes) {
       this.src = src;
@@ -185,7 +158,142 @@ window.addEventListener('DOMContentLoaded', () => {
       this.parent.append(element);
     }
   }
-  for(let i = 1; i<4; i++){
-    new MenuCard(data[i],'.menu .container').render();
+
+  const getResource = async (url) => {
+    const res = await fetch(url);
+    if(!res.ok){
+      throw new Error(`Could not fetch ${url}, status ${res.status}`)
+    }
+    return await res.json();
   }
+
+  // getResource('http://localhost:3000/menu')
+  //     .then(res=> res.forEach(data => new MenuCard(data, '.menu .container').render()));
+
+  axios.get('http://localhost:3000/menu')
+      .then(res=> res.data.forEach(data => new MenuCard(data, '.menu .container').render()));
+
+  //FORMS
+  const forms = document.querySelectorAll('form');
+  const message = {
+    loading : 'icons/spinner.svg',
+    success: 'Спасибо, скоро мы с вами свяжемся',
+    fail: 'Что-то пошло не так...'
+  }
+  forms.forEach(form => bindPostData(form));
+
+  const postData = async (url,data) => {
+    const res = await fetch(url, {
+      method:'POST',
+      headers: {
+        'Content-type': 'application/json'
+      },
+      body: data
+    });
+    return await res.json();
+  }
+
+  function bindPostData (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const statusMessage = document.createElement('img');
+      statusMessage.src = message.loading;
+      statusMessage.style.cssText = `
+        display: block;
+        margin: 0 auto;`;
+      form.insertAdjacentElement('afterend', statusMessage);
+
+      const formData = new FormData(form);
+
+      const json = JSON.stringify(Object.fromEntries(formData.entries()));
+
+      postData('http://localhost:3000/requests', json)
+          .then(data => {
+            console.log(data);
+            showThanksModal(message.success);
+            statusMessage.remove();
+          })
+          .catch(() => {
+            showThanksModal(message.fail);
+          })
+          .finally(() => {
+            form.reset();
+          })
+    })
+  }
+
+  function showThanksModal (message) {
+    const prevModalDialog = document.querySelector('.modal__dialog');
+    prevModalDialog.classList.add('hide');
+    openPopup();
+    const thanksModal = document.createElement('div');
+    thanksModal.classList.add('modal__dialog');
+    thanksModal.innerHTML = `
+      <div class="modal__content">
+        <div class="modal__close" data-close>×</div>
+        <div class="modal__title">${message}</div>
+      </div>`
+    document.querySelector('.modal').append(thanksModal);
+    setTimeout(()=> {
+      thanksModal.remove();
+      prevModalDialog.classList.remove('hide');
+      prevModalDialog.classList.add('show');
+      closePopup();
+    },4000)
+  }
+
+  fetch('http://localhost:3000/menu')
+      .then(data => data.json())
+      .then(res => console.log(res));
+
+  // SLIDER
+  const nextSlide = document.querySelector('.offer__slider-next'),
+        prevSlide = document.querySelector('.offer__slider-prev'),
+        sliderCurrent = document.querySelector('#current'),
+        sliderTotal = document.querySelector('#total'),
+        slides = document.querySelectorAll('.offer__slide'),
+        slidesWrapper = document.querySelector('.offer__slider-wrapper'),
+        slidesField = document.querySelector('.offer__slider-inner'),
+        width = window.getComputedStyle(slidesWrapper).width;
+  let slideIndex = 1;
+  let offset = 0;
+
+  slidesField.style.width = 100 * slides.length + '%';
+  slides.forEach(slide => slide.style.width = width);
+  slidesField.style.display = 'flex';
+  slidesField.style.transition = '0.5s all';
+  slidesWrapper.style.overflow = 'hidden';
+  sliderCurrent.textContent = addZero(slideIndex);
+  sliderTotal.textContent = addZero(slides.length);
+  nextSlide.addEventListener('click', () => {
+    offset === +width.slice(0,width.length -2) * (slides.length - 1) ?
+      offset = 0 :
+      offset += +width.slice(0,width.length -2);
+    slidesField.style.transform = `translateX(-${offset}px)`
+    slideIndex === slides.length ? slideIndex = 1 : slideIndex++;
+    addZero(slideIndex);
+    sliderCurrent.textContent = addZero(slideIndex);
+  })
+  prevSlide.addEventListener('click', () => {
+    offset === 0 ?
+        offset = +width.slice(0,width.length -2) * (slides.length - 1) :
+        offset -= +width.slice(0,width.length -2);
+    slidesField.style.transform = `translateX(-${offset}px)`
+    slideIndex === 1 ? slideIndex = slides.length : slideIndex--;
+    sliderCurrent.textContent = addZero(slideIndex);
+  })
+
+  /*function next (n) {
+    slideIndex += n;
+    if(slideIndex > slides.length) slideIndex = 1;
+    if(slideIndex < 1) slideIndex = slides.length;
+    slides.forEach(item => item.style.display = 'none');
+    slides[slideIndex-1].style.display = 'block';
+    sliderCurrent.textContent = addZero(slideIndex);
+  }
+  next(0);
+  sliderTotal.textContent = addZero(slides.length);
+  sliderBtnRight.addEventListener('click', () => next(1));
+  sliderBtnLeft.addEventListener('click', () => next(-1));*/
 })
