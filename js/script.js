@@ -274,6 +274,8 @@ window.addEventListener('DOMContentLoaded', () => {
     slideIndex === slides.length ? slideIndex = 1 : slideIndex++;
     addZero(slideIndex);
     sliderCurrent.textContent = addZero(slideIndex);
+    indicators.forEach(dot => dot.style.opacity = '.5');
+    indicators[slideIndex-1].style.opacity = 1;
   })
   prevSlide.addEventListener('click', () => {
     offset === 0 ?
@@ -282,7 +284,44 @@ window.addEventListener('DOMContentLoaded', () => {
     slidesField.style.transform = `translateX(-${offset}px)`
     slideIndex === 1 ? slideIndex = slides.length : slideIndex--;
     sliderCurrent.textContent = addZero(slideIndex);
+    indicators.forEach(dot => dot.style.opacity = '.5');
+    indicators[slideIndex-1].style.opacity = 1;
   })
+  // DOTS on slider
+  // Create a new ordered list element to hold the slider indicators
+  const slider = document.querySelector('.offer__slider'),
+        dots = document.createElement('ol'),
+        indicators = [];
+
+  // Set the slider position to relative
+  slider.style.position = 'relative';
+  // Add a class to the indicator list
+  dots.classList.add('indicators');
+  // Append the indicator list to the slider
+  slider.append(dots);
+
+  // For each slide, create an empty 'li' element, add a 'data-slide-to' attribute and a class for the dot
+  for(let i = 0; i<slides.length; i++){
+    let li = document.createElement('li');
+    li.setAttribute('data-slide-to', i+1);
+    li.classList.add('dot');
+    // Set the opacity of the first dot to 1 and add it to the 'ol' element
+    if(i === 0) li.style.opacity = 1;
+    dots.append(li);
+    indicators.push(li);
+  }
+  // Add event listeners to each dot to update the slide position and dot opacity when clicked
+  indicators.forEach(indicator => {
+    indicator.addEventListener('click', (event) => {
+      const slideIndex = event.target.dataset.slideTo;
+      const slideOffset = +width.slice(0, -2) * (slideIndex - 1);
+      sliderCurrent.textContent = addZero(slideIndex);
+      slidesField.style.transform = `translateX(-${slideOffset}px)`;
+      indicators.forEach(dot => dot.style.opacity = '.5');
+      indicator.style.opacity = 1;
+    });
+  });
+
 
   /*function next (n) {
     slideIndex += n;
