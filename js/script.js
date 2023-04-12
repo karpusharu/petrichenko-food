@@ -259,6 +259,16 @@ window.addEventListener('DOMContentLoaded', () => {
   let slideIndex = 1;
   let offset = 0;
 
+  // Technical functions
+  // make active dot opacity 1
+  const activeDot = (array, indicator) => {
+    array.forEach(dot => dot.style.opacity = '.5');
+    indicator.style.opacity = 1;
+  }
+  // make str to num and delete all letters
+  const regExp = (str) => +str.replace(/\D/g,'');
+
+
   slidesField.style.width = 100 * slides.length + '%';
   slides.forEach(slide => slide.style.width = width);
   slidesField.style.display = 'flex';
@@ -267,25 +277,23 @@ window.addEventListener('DOMContentLoaded', () => {
   sliderCurrent.textContent = addZero(slideIndex);
   sliderTotal.textContent = addZero(slides.length);
   nextSlide.addEventListener('click', () => {
-    offset === +width.slice(0,width.length -2) * (slides.length - 1) ?
+    offset === regExp(width) * (slides.length - 1) ?
       offset = 0 :
-      offset += +width.slice(0,width.length -2);
+      offset += regExp(width);
     slidesField.style.transform = `translateX(-${offset}px)`
     slideIndex === slides.length ? slideIndex = 1 : slideIndex++;
     addZero(slideIndex);
     sliderCurrent.textContent = addZero(slideIndex);
-    indicators.forEach(dot => dot.style.opacity = '.5');
-    indicators[slideIndex-1].style.opacity = 1;
+    activeDot(indicators,indicators[slideIndex-1]);
   })
   prevSlide.addEventListener('click', () => {
     offset === 0 ?
-        offset = +width.slice(0,width.length -2) * (slides.length - 1) :
-        offset -= +width.slice(0,width.length -2);
+        offset = regExp(width) * (slides.length - 1) :
+        offset -= regExp(width);
     slidesField.style.transform = `translateX(-${offset}px)`
     slideIndex === 1 ? slideIndex = slides.length : slideIndex--;
     sliderCurrent.textContent = addZero(slideIndex);
-    indicators.forEach(dot => dot.style.opacity = '.5');
-    indicators[slideIndex-1].style.opacity = 1;
+    activeDot(indicators,indicators[slideIndex-1]);
   })
   // DOTS on slider
   // Create a new ordered list element to hold the slider indicators
@@ -314,11 +322,10 @@ window.addEventListener('DOMContentLoaded', () => {
   indicators.forEach(indicator => {
     indicator.addEventListener('click', (event) => {
       const slideIndex = event.target.dataset.slideTo;
-      const slideOffset = +width.slice(0, -2) * (slideIndex - 1);
+      const slideOffset = +width.replace(/\D/g,'') * (slideIndex - 1);
       sliderCurrent.textContent = addZero(slideIndex);
       slidesField.style.transform = `translateX(-${slideOffset}px)`;
-      indicators.forEach(dot => dot.style.opacity = '.5');
-      indicator.style.opacity = 1;
+      activeDot(indicators,indicator);
     });
   });
 
@@ -335,4 +342,58 @@ window.addEventListener('DOMContentLoaded', () => {
   sliderTotal.textContent = addZero(slides.length);
   sliderBtnRight.addEventListener('click', () => next(1));
   sliderBtnLeft.addEventListener('click', () => next(-1));*/
+  //CALCULATOR
+  const result = document.querySelector('.calculating__result > span'),
+        height = document.querySelector('#height'),
+        weight = document.querySelector('#weight'),
+        age = document.querySelector('#age'),
+        male = document.querySelector('#male'),
+        genderField = document.querySelector('#gender'),
+        activityField = document.querySelector('.calculating__choose_big');
+
+  const validateInputs = (arr) => {
+    arr.forEach(input => {
+      if (input.value.match(/\D/g)){
+        input.style.border = '1px solid red';
+      } else {
+        input.style.border = 'none';
+      }
+    })
+  }
+
+  const calculateDailyCalories = () => {
+    if(height.value && age.value && weight.value) {
+      male.classList.contains('calculating__choose-item_active') ?
+          dailyCalories(88.36 + (13.4 * regExp(weight.value)) + (4.8 * regExp(height.value)) - (5.7 * regExp(age.value))) :
+          dailyCalories(447.6 + (9.2 * regExp(weight.value)) + (3.1 * regExp(height.value)) - (4.3 * regExp(age.value)));
+    } else result.textContent = 'NaN';
+    validateInputs([weight, height, age]);
+  }
+
+  // Change activity field
+  const activityChoose = (element) => {
+    const fields = element.querySelectorAll('.calculating__choose-item');
+    fields.forEach(field =>
+        field.addEventListener('click', (e) => {
+          fields.forEach(field => {
+            field.classList.remove('calculating__choose-item_active');
+            field.addEventListener('click', calculateDailyCalories);
+          });
+          e.target.classList.add('calculating__choose-item_active');
+        }));
+  };
+
+  const activityValue = (form) => {
+    const field = form.querySelector('.calculating__choose-item_active');
+    return +field.dataset.ratio;
+  }
+
+  activityChoose(genderField);
+  activityChoose(activityField);
+
+  const dailyCalories = (BMR) => result.textContent = Math.trunc(BMR * activityValue(activityField));
+
+  height.addEventListener('input', calculateDailyCalories);
+  weight.addEventListener('input', calculateDailyCalories);
+  age.addEventListener('input', calculateDailyCalories);
 })
