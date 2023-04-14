@@ -1,7 +1,7 @@
 function addZero (number) {
     return number < 10 ? `0${number}` : number;
 }
-function timer () {
+function timer (deadline) {
     let days = document.querySelector('#days');
     let hours = document.querySelector('#hours');
     let minutes = document.querySelector('#minutes');
@@ -28,7 +28,7 @@ function timer () {
     let intervalID = window.setInterval(remainingTime, 1000);
     function remainingTime() {
         const now = new Date();
-        const finish = new Date('2023, 06, 15');
+        const finish = new Date(deadline);
         const remaining = formatDuration(finish - now);
         days.textContent = addZero(remaining.days);
         hours.textContent = addZero(remaining.hours);

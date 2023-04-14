@@ -1,13 +1,13 @@
 import {addZero} from './timer';
 const regExp = (str) => +str.replace(/\D/g,'');
-function slider () {
-    const nextSlide = document.querySelector('.offer__slider-next'),
-        prevSlide = document.querySelector('.offer__slider-prev'),
-        sliderCurrent = document.querySelector('#current'),
-        sliderTotal = document.querySelector('#total'),
-        slides = document.querySelectorAll('.offer__slide'),
-        slidesWrapper = document.querySelector('.offer__slider-wrapper'),
-        slidesField = document.querySelector('.offer__slider-inner'),
+function slider ({container, slide, nextArrow, prevArrow, totalCounter, currentCounter, wrapper, field}) {
+    const nextSlide = document.querySelector(nextArrow),
+        prevSlide = document.querySelector(prevArrow),
+        sliderCurrent = document.querySelector(currentCounter),
+        sliderTotal = document.querySelector(totalCounter),
+        slides = document.querySelectorAll(slide),
+        slidesWrapper = document.querySelector(wrapper),
+        slidesField = document.querySelector(field),
         width = window.getComputedStyle(slidesWrapper).width;
     let slideIndex = 1;
     let offset = 0;
@@ -50,7 +50,7 @@ function slider () {
     })
     // DOTS on slider
     // Create a new ordered list element to hold the slider indicators
-    const slider = document.querySelector('.offer__slider'),
+    const slider = document.querySelector(container),
         dots = document.createElement('ol'),
         indicators = [];
 

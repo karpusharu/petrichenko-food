@@ -7,7 +7,6 @@ function calculator () {
         male = document.querySelector('#male'),
         genderField = document.querySelector('#gender'),
         activityField = document.querySelector('.calculating__choose_big');
-    let ratio, sex;
 
     const setActiveField = (form, selector) => {
         const fields = form.querySelectorAll('.calculating__choose-item');

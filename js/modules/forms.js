@@ -1,4 +1,7 @@
-function forms () {
+import {openPopup, closePopup} from './modal.js';
+import {postData} from "../services/services";
+
+function forms (modalTimerId) {
     const forms = document.querySelectorAll('form');
     const message = {
         loading : 'icons/spinner.svg',
@@ -6,17 +9,6 @@ function forms () {
         fail: 'Что-то пошло не так...'
     }
     forms.forEach(form => bindPostData(form));
-
-    const postData = async (url,data) => {
-        const res = await fetch(url, {
-            method:'POST',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: data
-        });
-        return await res.json();
-    }
 
     function bindPostData (form) {
         form.addEventListener('submit', (e) => {
@@ -51,7 +43,7 @@ function forms () {
     function showThanksModal (message) {
         const prevModalDialog = document.querySelector('.modal__dialog');
         prevModalDialog.classList.add('hide');
-        openPopup();
+        openPopup(modalTimerId);
         const thanksModal = document.createElement('div');
         thanksModal.classList.add('modal__dialog');
         thanksModal.innerHTML = `
